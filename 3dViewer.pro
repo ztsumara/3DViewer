@@ -7,8 +7,8 @@ CONFIG += c++17
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 
-LIBS += -L"$$PWD/vcpkg/installed/x64-mingw-dynamic/lib" -lassimp
-INCLUDEPATH += $$PWD/vcpkg/installed/x64-mingw-dynamic/include
+LIBS += -L"$$PWD/libs/vcpkg/installed/x64-mingw-dynamic/lib" -lassimp
+INCLUDEPATH += $$PWD/libs/vcpkg/installed/x64-mingw-dynamic/include
 
 SOURCES += \
     MyOpenGLWidget.cpp \
