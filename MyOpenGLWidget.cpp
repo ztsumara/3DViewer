@@ -27,15 +27,29 @@ MyOpenGLWidget::~MyOpenGLWidget()
 
 void MyOpenGLWidget::openModel(std::string path)
 {
-    models.clear();
     makeCurrent(); // активируем контекст
+
+    // 1. Удаляем старые OpenGL-меши
+    for (auto &mesh : meshes) {
+        if(mesh.VAO) glDeleteVertexArrays(1, &mesh.VAO);
+        if(mesh.VBO) glDeleteBuffers(1, &mesh.VBO);
+    }
+    meshes.clear();
+
+    // 2. Удаляем старые модели
+    for (auto m : models) delete m;
+    models.clear();
+
+    // 3. Загружаем новую модель
     Model* model = new Model();
     if(model->loadModel(path)) {
         addModel(model);
+    } else {
+        delete model; // на случай ошибки загрузки
     }
-    doneCurrent();
-}
 
+    doneCurrent(); // завершаем работу с контекстом
+}
 // Добавление модели на сцену
 void MyOpenGLWidget::addModel(Model* model)
 {
