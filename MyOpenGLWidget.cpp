@@ -27,39 +27,33 @@ MyOpenGLWidget::~MyOpenGLWidget()
 
 void MyOpenGLWidget::openModel(std::string path)
 {
-    makeCurrent(); // активируем контекст
-
-    // 1. Удаляем старые OpenGL-меши
+    makeCurrent();
     for (auto &mesh : meshes) {
         if(mesh.VAO) glDeleteVertexArrays(1, &mesh.VAO);
         if(mesh.VBO) glDeleteBuffers(1, &mesh.VBO);
     }
     meshes.clear();
 
-    // 2. Удаляем старые модели
     for (auto m : models) delete m;
     models.clear();
 
-    // 3. Загружаем новую модель
     Model* model = new Model();
     if(model->loadModel(path)) {
         addModel(model);
     } else {
-        delete model; // на случай ошибки загрузки
+        delete model;
     }
-
-    doneCurrent(); // завершаем работу с контекстом
+    doneCurrent();
 }
+
 // Добавление модели на сцену
 void MyOpenGLWidget::addModel(Model* model)
 {
     if (!model) return;
-
     models.push_back(model);
     Mesh mesh = createMeshFromModel(*model);
     meshes.push_back(mesh);
-
-    update(); // перерисовать сцену
+    update();
 }
 
 Mesh MyOpenGLWidget::createMeshFromModel(const Model& model)
@@ -104,16 +98,13 @@ void MyOpenGLWidget::initializeGL()
 {
     initializeOpenGLFunctions();
     glEnable(GL_DEPTH_TEST);
-    glClearColor(0.1f, 0.1f, 0.15f, 1.0f);
-
+    glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
     setupShaders();
-
 }
 
 void MyOpenGLWidget::resizeGL(int w, int h)
 {
     glViewport(0, 0, w, h);
-
 }
 
 void MyOpenGLWidget::paintGL(){
@@ -136,8 +127,8 @@ void MyOpenGLWidget::paintGL(){
         shaderProgram->setUniformValue("model", finalModel);
         shaderProgram->setUniformValue("view", view);
         shaderProgram->setUniformValue("projection", projection);
-        shaderProgram->setUniformValue("isTriad", 0);
-        shaderProgram->setUniformValue("lightPos", QVector3D(1,1,3));
+        shaderProgram->setUniformValue("lightPosKey", QVector3D(3.0f, 3.0f, 3.0f));
+        shaderProgram->setUniformValue("lightPosFill", QVector3D(-3.0f, 2.0f, 1.0f));
         shaderProgram->setUniformValue("viewPos", QVector3D(0,0,-zoom));
         shaderProgram->setUniformValue("objectColor", QVector3D(0.7f,0.7f,0.7f));
 
@@ -147,12 +138,10 @@ void MyOpenGLWidget::paintGL(){
     }
 
     shaderProgram->release();
-    glDepthRange(0.0, 0.01); // мини-сцена почти перед основной
+    glDepthRange(0.0, 0.01);
     drawTriad();
-    glDepthRange(0.0, 1.0);  // восстанавливаем стандартный диапазон
+    glDepthRange(0.0, 1.0);
 }
-
-
 
 void MyOpenGLWidget::setupShaders(){
     shaderProgram = new QOpenGLShaderProgram(this);
@@ -175,7 +164,7 @@ void MyOpenGLWidget::mousePressEvent(QMouseEvent* event){
     }
     if(event->button() == Qt::MiddleButton) {
         middleButtonPressed = true;
-        setCursor(Qt::SizeAllCursor); // панорамирование
+        setCursor(Qt::SizeAllCursor);
     }
 }
 
@@ -183,7 +172,7 @@ void MyOpenGLWidget::mouseReleaseEvent(QMouseEvent* event){
     if(event->button() == Qt::LeftButton) {
         leftButtonPressed = false;
         QCursor::setPos(mapToGlobal(initialMousePos));
-        unsetCursor(); // возвращаем стандартный курсор
+        unsetCursor();
     }
     if(event->button() == Qt::MiddleButton) {
         middleButtonPressed = false;
@@ -193,7 +182,7 @@ void MyOpenGLWidget::mouseReleaseEvent(QMouseEvent* event){
 
 void MyOpenGLWidget::mouseMoveEvent(QMouseEvent* event){
     if(leftButtonPressed){
-        setCursor(Qt::BlankCursor); // скрываем курсор
+        setCursor(Qt::BlankCursor);
         QPoint mousePos = initialMousePos;
         QPoint delta = event->pos() - mousePos;
 
@@ -241,7 +230,7 @@ Arrow MyOpenGLWidget::createArrow(float length, float radius, float coneLength, 
     float cylinderLength = length - coneLength;
     float coneRadius = radius * 2.0f; // радиус основания конуса больше цилиндра
 
-    // --- Цилиндр ---
+    // Цилиндр
     for (int i = 0; i < segments; ++i)
     {
         float theta1 = float(i) / segments * 2.0f * M_PI;
@@ -272,7 +261,7 @@ Arrow MyOpenGLWidget::createArrow(float length, float radius, float coneLength, 
         arrow.normals.push_back(n2);
     }
 
-    // --- Конус ---
+    // Конус
     QVector3D tip(length, 0, 0); // вершина конуса
 
     for (int i = 0; i < segments; ++i)
@@ -283,16 +272,15 @@ Arrow MyOpenGLWidget::createArrow(float length, float radius, float coneLength, 
         QVector3D base1(cylinderLength, coneRadius * cos(theta1), coneRadius * sin(theta1));
         QVector3D base2(cylinderLength, coneRadius * cos(theta2), coneRadius * sin(theta2));
 
-        // Нормали для конуса — наклон к вершине по поверхности
         auto computeNormal = [&](const QVector3D& basePoint) -> QVector3D {
             QVector3D dir = basePoint - tip;        // от вершины к основанию
-            dir.setX(0);                            // оставить только YZ для направления наклона
+            dir.setX(0);
             QVector3D normal(coneLength, dir.y(), dir.z());
             return normal.normalized();
         };
 
         QVector3D n1 = computeNormal(base1);
-        QVector3D n2 = computeNormal(tip);       // вершина, можно использовать любой нормализованный вектор вдоль оси
+        QVector3D n2 = computeNormal(tip);
         QVector3D n3 = computeNormal(base2);
 
         arrow.vertices.push_back(base1);
@@ -322,7 +310,7 @@ void MyOpenGLWidget::drawTriad()
     QMatrix4x4 coordView;
     coordView.translate(0, 0, -3);
 
-    // Модельная матрица триады (вращение как у модели)
+    // Модельная матрица триады
     QMatrix4x4 coordModel;
     coordModel.rotate(currentRotation);
 
@@ -333,18 +321,18 @@ void MyOpenGLWidget::drawTriad()
 
     std::vector<Arrow> arrows;
 
-    // Пример: X красная стрелка
+
     Arrow xArrow = createArrow(2.0f, 0.1f, 0.7f, 100, QVector3D(1,0,0));
     xArrow.rotation.setToIdentity();
     arrows.push_back(xArrow);
 
-    // Y зелёная стрелка
+
     Arrow yArrow = createArrow(2.0f, 0.1f, 0.7f, 100, QVector3D(0,1,0));
     QMatrix4x4 rotY; rotY.rotate(90, 0, 0, 1);
     yArrow.rotation = rotY;
     arrows.push_back(yArrow);
 
-    // Z синяя стрелка
+
     Arrow zArrow = createArrow(2.0f, 0.1f, 0.7f, 100, QVector3D(0,0,1));
     QMatrix4x4 rotZ; rotZ.rotate(-90, 0, 1, 0);
     zArrow.rotation = rotZ;
@@ -357,8 +345,8 @@ void MyOpenGLWidget::drawTriad()
         shaderProgram->setUniformValue("model", coordModel * arrow.rotation * scaleMatrix);
         shaderProgram->setUniformValue("view", coordView);
         shaderProgram->setUniformValue("projection", coordProj);
-        shaderProgram->setUniformValue("isTriad", 0); // включаем освещение
-        shaderProgram->setUniformValue("lightPos", QVector3D(1,1,3));
+        shaderProgram->setUniformValue("lightPosKey", QVector3D(3.0f, 3.0f, 3.0f));
+        shaderProgram->setUniformValue("lightPosFill", QVector3D(-3.0f, 2.0f, 1.0f));
         shaderProgram->setUniformValue("viewPos", QVector3D(0,0,3));
         shaderProgram->setUniformValue("objectColor", arrow.color);
 
@@ -369,7 +357,6 @@ void MyOpenGLWidget::drawTriad()
         glBindVertexArray(vao);
         glBindBuffer(GL_ARRAY_BUFFER, vbo);
 
-        // interleaved: x,y,z + nx,ny,nz
         std::vector<float> data;
         for (size_t i = 0; i < arrow.vertices.size(); ++i) {
             data.push_back(arrow.vertices[i].x());

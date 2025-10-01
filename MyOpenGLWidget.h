@@ -10,8 +10,8 @@
 struct Mesh {
     GLuint VAO = 0;
     GLuint VBO = 0;
-    GLuint EBO = 0;      // новый
-    int indexCount = 0;  // теперь будем считать количество индексов
+    GLuint EBO = 0;
+    int indexCount = 0;
 };
 
 struct Arrow {
@@ -28,9 +28,8 @@ class MyOpenGLWidget : public QOpenGLWidget, protected QOpenGLFunctions_3_3_Core
 public:
     explicit MyOpenGLWidget(QWidget *parent = nullptr);
     ~MyOpenGLWidget();
-    void openModel(std::string path);
 
-    // Добавление модели на сцену
+    void openModel(std::string path);
     void addModel(Model* model);
 
 protected:
@@ -40,11 +39,11 @@ protected:
 
 private:
     QOpenGLShaderProgram *shaderProgram = nullptr;
-    std::vector<Mesh> meshes;       // все меши на сцене
-    std::vector<Model*> models;     // указатели на модели
+    std::vector<Mesh> meshes;
+    std::vector<Model*> models;
 
     void setupShaders();
-    Mesh createMeshFromModel(const Model& model); // функция создания Mesh из Model
+    Mesh createMeshFromModel(const Model& model);
 
 private:
     // Arcball и панорамирование
@@ -58,18 +57,15 @@ private:
     bool middleButtonPressed = false;
 
     QVector3D mapToSphere(const QPointF& pt);
-
     void drawTriad();
     Arrow createArrow(float length, float radius, float coneLength, int segments, QVector3D color);
+
 protected:
     void mousePressEvent(QMouseEvent* event) override;
     void mouseReleaseEvent(QMouseEvent* event) override;
-
     void mouseMoveEvent(QMouseEvent* event) override;
     void wheelEvent(QWheelEvent* event) override;
     void mouseDoubleClickEvent(QMouseEvent* event) override;
-
-
 };
 
 #endif // MYOPENGLWIDGET_H
